@@ -99,5 +99,5 @@ struct TextMessage {
 struct Player {
 	int id;
 	Coordinate pos;
-	ObjectForm form;
+	char name[MAXNAMELEN];
 };

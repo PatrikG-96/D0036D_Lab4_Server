@@ -151,13 +151,14 @@ void Server::send_msg(SOCKET sock_desc, char* buffer, int len)
 	int res = send(sock_desc, buffer, len,0);
 }
 
-void Server::send_to_all(char* buffer, int len, SOCKET exclude = INVALID_SOCKET)
+void Server::send_to_all(char* buffer, int len, SOCKET exclude)
 {
 	for (int i = 0; i < MAX_CLIENTS; i++)
 	{
 		SOCKET sock = client_sockets[i];
 		if (sock != INVALID_SOCKET && sock != exclude)
 		{
+			cout << "should send to socket: " << sock << endl;
 			send(sock, buffer, len, 0);
 		}
 	}

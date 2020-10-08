@@ -1,7 +1,7 @@
 #pragma once
 //#include "Server.h"
 //#include <iostream>
-//#include "GameLogic.h"
+#include "GameLogic.h"
 #include <WinSock2.h>
 #include <iostream>
 #include "Protocol.h"
@@ -16,12 +16,12 @@ class Decider
 
 private:
 
-	class Server* server;
-	//GameLogic logic;
+	Server* server;
+	GameLogic gl = GameLogic();
 
 private:
 
-	//void changeMessage(char buffer);
+	void event_msg(SOCKET sock, char buffer[]);
 	void join_msg(SOCKET sock, char buffer[]);
 	//void leaveMessage(char buffer);
 

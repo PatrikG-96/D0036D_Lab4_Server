@@ -34,7 +34,7 @@ public:
 	~Server();
 	void start();
 	void send_msg(SOCKET, char*, int);
-	void send_to_all(char*, int, SOCKET)
+	void send_to_all(char*, int, SOCKET sock = INVALID_SOCKET);
 
 };
 
