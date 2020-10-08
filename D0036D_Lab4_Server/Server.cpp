@@ -1,13 +1,15 @@
 #include "Server.h"
-
+#include "Decider.h"
 
 using namespace std;
 
-Server::Server(short port)
+Server::Server(int port)
 {
 	// Temporary windows code
 	//-----------------------------------------------
 	
+	//cout << (unsigned short)port << endl;
+
 	WSAData wsaData;
 
 	if (WSAStartup(0x202, &wsaData))
@@ -38,7 +40,7 @@ Server::Server(short port)
 
 	for (int i = port; i < MAX_PORT; i++)
 	{
-		addr.sin_port = i;
+		addr.sin_port = htons(i);
 
 		if (bind(master_socket, (sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR)
 		{
@@ -58,6 +60,7 @@ Server::Server(short port)
 		bound = true;
 		break;
 	}
+
 	
 	if (!bound)
 	{
@@ -65,11 +68,14 @@ Server::Server(short port)
 		return;
 	}
 
+	addrlen = sizeof(addr);
+
+	decider = new Decider(this);
+
 }
 
 void Server::start()
 {
-
 	fd_set readSet;
 
 	while (1)
@@ -101,12 +107,13 @@ void Server::start()
 		{
 			// Create a new socket and assign the connection recieved to this socket.
 			SOCKET newSocket;
-			if ((newSocket = accept(master_socket, (sockaddr*)&addr, (socklen_t*)sizeof(addr))) == INVALID_SOCKET)
+			if ((newSocket = accept(master_socket, (sockaddr*)&addr, &addrlen)) == INVALID_SOCKET)
 			{
 				cout << "Accepting connection failed." << endl;
 			}
 			else // If accept didn't fail, add it to an empty spot in the client_sockets array
 			{
+				cout << "New connection! Socket: " << newSocket << endl;
 				for (int i = 0; i < MAX_CLIENTS; i++)
 				{
 					if (client_sockets[i] == INVALID_SOCKET)
@@ -122,9 +129,41 @@ void Server::start()
 			SOCKET sock_desc = client_sockets[i];
 			if (FD_ISSET(sock_desc, &readSet))
 			{
+				cout << "something can be read on socket: " << sock_desc << endl;
+				char buff[1024];
+				int res = recv(sock_desc, buff, sizeof(buff), 0);
+				
+				if (res == SOCKET_ERROR)
+				{
+					cout << "Error recieving: " << WSAGetLastError() << endl;
+					continue;
+				}
 
+				decider->decide(sock_desc, buff);
 			}
 		}
 
 	}
+}
+
+void Server::send_msg(SOCKET sock_desc, char* buffer, int len)
+{
+	int res = send(sock_desc, buffer, len,0);
+}
+
+void Server::send_to_all(char* buffer, int len, SOCKET exclude = INVALID_SOCKET)
+{
+	for (int i = 0; i < MAX_CLIENTS; i++)
+	{
+		SOCKET sock = client_sockets[i];
+		if (sock != INVALID_SOCKET && sock != exclude)
+		{
+			send(sock, buffer, len, 0);
+		}
+	}
+}
+
+Server::~Server()
+{
+	delete decider;
 }
